@@ -3,44 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Urban Retail Access — Fort Worth</title>
+  <title>Urban Retail Access &mdash; Fort Worth</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/pmtiles@2.11.0/dist/pmtiles.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mapbox-pmtiles@1/dist/mapbox-pmtiles.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     :root {
-      --bg:      #0a0c0f;
-      --surface: #111418;
-      --border:  #1e2329;
-      --border2: #2a3040;
-      --text:    #e8eaf0;
-      --muted:   #6b7280;
-      --accent:  #00e5ff;
-      --accent2: #ff6b35;
-      --mhi-1: #1a0533; --mhi-2: #4a0e6b; --mhi-3: #8b1a8b;
-      --mhi-4: #c4396e; --mhi-5: #f06b2e; --mhi-6: #ffd166;
-      --iso-5: #00e5ff; --iso-10: #0099cc; --iso-15: #005a8e; --iso-20: #002d5a;
+      --bg:#0a0c0f; --surface:#111418; --border:#1e2329; --border2:#2a3040;
+      --text:#e8eaf0; --muted:#6b7280; --accent:#00e5ff; --accent2:#ff6b35;
+      --mhi-1:#1a0533; --mhi-2:#4a0e6b; --mhi-3:#8b1a8b;
+      --mhi-4:#c4396e; --mhi-5:#f06b2e; --mhi-6:#ffd166;
+      --iso-5:#00e5ff; --iso-10:#0099cc; --iso-15:#005a8e; --iso-20:#002d5a;
     }
-    html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+    html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
     #map { position:absolute; inset:0; }
-
-    /* Topbar */
     #topbar {
       position:absolute; top:0; left:0; right:0; height:52px;
       background:rgba(10,12,15,0.92); backdrop-filter:blur(12px);
       border-bottom:1px solid var(--border);
       display:flex; align-items:center; padding:0 20px; gap:20px; z-index:100;
     }
-    #wordmark {
-      font-family:'Syne',sans-serif; font-weight:800; font-size:13px;
-      letter-spacing:0.12em; text-transform:uppercase; color:var(--text); white-space:nowrap;
-    }
+    #wordmark { font-family:'Syne',sans-serif; font-weight:800; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text); white-space:nowrap; }
     #wordmark span { color:var(--accent); }
     .divider { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
-
-    /* City nav */
     #city-nav { display:flex; gap:3px; overflow-x:auto; }
     #city-nav::-webkit-scrollbar { display:none; }
     .city-btn {
@@ -53,8 +40,6 @@
     }
     .city-btn:hover { color:var(--text); border-color:var(--border2); }
     .city-btn.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.06); }
-
-    /* Layer toggles */
     #layer-toggles { display:flex; gap:12px; margin-left:auto; flex-shrink:0; }
     .toggle-pill {
       font-family:'DM Mono',monospace; font-size:10px; font-weight:500;
@@ -66,22 +51,13 @@
     .toggle-pill[data-layer="iso"] { color:#00e5ff; }
     .toggle-pill[data-layer="poi"] { color:#ff6b35; }
     .toggle-pill.inactive { color:var(--muted) !important; }
-    .toggle-dot {
-      width:8px; height:8px; border-radius:50%;
-      border:1.5px solid currentColor; transition:background 0.15s;
-    }
+    .toggle-dot { width:8px; height:8px; border-radius:50%; border:1.5px solid currentColor; transition:background 0.15s; }
     .toggle-pill:not(.inactive) .toggle-dot { background:currentColor; }
-
-    /* Walk filter */
     #bottom-panel {
       position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
       z-index:100; display:flex; flex-direction:column; align-items:center; gap:10px;
     }
-    #walk-label {
-      font-family:'DM Mono',monospace; font-size:10px;
-      letter-spacing:0.1em; text-transform:uppercase;
-      color:var(--muted); text-align:center;
-    }
+    #walk-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-align:center; }
     #walk-label strong { font-size:14px; font-weight:500; color:var(--accent); display:block; margin-bottom:2px; }
     #walk-slider-row { display:flex; align-items:center; gap:8px; }
     .walk-step {
@@ -92,31 +68,17 @@
     }
     .walk-step:hover { color:var(--text); }
     .walk-step.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.08); }
-
-    /* Legend */
     #legend {
       position:absolute; bottom:110px; right:20px; z-index:100;
       background:rgba(10,12,15,0.88); backdrop-filter:blur(12px);
-      border:1px solid var(--border); border-radius:6px;
-      padding:14px 16px; min-width:170px;
+      border:1px solid var(--border); border-radius:6px; padding:14px 16px; min-width:170px;
     }
-    .legend-title {
-      font-family:'DM Mono',monospace; font-size:9px; font-weight:500;
-      letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;
-    }
-    .legend-gradient {
-      height:8px; border-radius:2px; margin-bottom:4px;
-      background:linear-gradient(to right,var(--mhi-1),var(--mhi-2),var(--mhi-3),var(--mhi-4),var(--mhi-5),var(--mhi-6));
-    }
-    .legend-labels {
-      display:flex; justify-content:space-between;
-      font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-bottom:14px;
-    }
+    .legend-title { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .legend-gradient { height:8px; border-radius:2px; margin-bottom:4px; background:linear-gradient(to right,var(--mhi-1),var(--mhi-2),var(--mhi-3),var(--mhi-4),var(--mhi-5),var(--mhi-6)); }
+    .legend-labels { display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-bottom:14px; }
     .legend-iso-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
     .legend-iso-swatch { width:28px; height:6px; border-radius:2px; opacity:0.85; }
     .legend-iso-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); }
-
-    /* Tooltip */
     #tooltip {
       position:absolute; z-index:200; pointer-events:none;
       background:rgba(10,12,15,0.95); border:1px solid var(--border2);
@@ -127,23 +89,15 @@
     #tooltip .tt-label { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
     #tooltip .tt-value { font-size:15px; font-weight:500; color:var(--accent); }
     #tooltip .tt-sub   { font-size:9px; color:var(--muted); margin-top:3px; }
-
-    /* Loader */
     #loader {
       position:absolute; inset:0; background:var(--bg); z-index:500;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       gap:16px; transition:opacity 0.5s ease;
     }
     #loader.hidden { opacity:0; pointer-events:none; }
-    .loader-word {
-      font-family:'Syne',sans-serif; font-weight:800; font-size:22px;
-      letter-spacing:0.15em; text-transform:uppercase; color:var(--text);
-    }
+    .loader-word { font-family:'Syne',sans-serif; font-weight:800; font-size:22px; letter-spacing:0.15em; text-transform:uppercase; color:var(--text); }
     .loader-word span { color:var(--accent); }
-    .loader-city {
-      font-family:'DM Mono',monospace; font-size:11px;
-      letter-spacing:0.2em; text-transform:uppercase; color:var(--muted);
-    }
+    .loader-city { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
     .loader-bar-wrap { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; }
     .loader-bar { height:100%; background:var(--accent); border-radius:2px; animation:loadpulse 1.6s ease-in-out infinite; }
     @keyframes loadpulse {
@@ -162,7 +116,7 @@
   <div class="loader-word">Urban <span>Retail</span> Access</div>
   <div class="loader-city">Fort Worth</div>
   <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
-  <div class="loader-status" id="loader-status">Initializing…</div>
+  <div class="loader-status" id="loader-status">Initializing map...</div>
 </div>
 
 <div id="map"></div>
@@ -192,7 +146,7 @@
 
 <div id="bottom-panel">
   <div id="walk-label">
-    <strong id="walk-value">≤ 15 min walk</strong>
+    <strong id="walk-value">&le; 15 min walk</strong>
     isochrone filter
   </div>
   <div id="walk-slider-row">
@@ -216,7 +170,7 @@
 
 <div id="tooltip">
   <div class="tt-label" id="tt-label">Tract</div>
-  <div class="tt-value" id="tt-value">—</div>
+  <div class="tt-value" id="tt-value">&mdash;</div>
   <div class="tt-sub"   id="tt-sub"></div>
 </div>
 
@@ -228,8 +182,12 @@ const R2_POI = 'https://pub-846dd985fe5743b1a4466cdbb1c48bcc.r2.dev/cities/fort-
 const CITY_CENTER = [-97.3308, 32.7555];
 const CITY_ZOOM   = 10;
 
-const protocol = new pmtiles.Protocol();
-mapboxgl.addProtocol('pmtiles', (request) => protocol.tile(request));
+// Register PMTiles custom source for Mapbox GL JS v3
+mapboxgl.Style.setSourceType(
+  mapboxPmTiles.PmTilesSource.SOURCE_TYPE,
+  mapboxPmTiles.PmTilesSource
+);
+
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const map = new mapboxgl.Map({
@@ -254,58 +212,80 @@ function hideLoader() {
   setTimeout(() => loaderEl.style.display = 'none', 600);
 }
 
-map.on('load', () => {
-  setStatus('Loading MHI tracts…');
-  map.addSource('mhi', { type:'vector', url:`pmtiles://${R2_MHI}` });
-  map.addLayer({
-    id:'mhi-fill', type:'fill', source:'mhi', 'source-layer':'mhi_tracts',
-    paint:{
-      'fill-color':['interpolate',['linear'],['coalesce',['get','mhi'],0],
-        0,'#1a0533', 30000,'#4a0e6b', 60000,'#8b1a8b',
-        90000,'#c4396e', 120000,'#f06b2e', 160000,'#ffd166'],
-      'fill-opacity':['interpolate',['linear'],['zoom'], 8,0.75, 13,0.55],
-    },
-  });
-  map.addLayer({
-    id:'mhi-outline', type:'line', source:'mhi', 'source-layer':'mhi_tracts',
-    paint:{ 'line-color':'rgba(255,255,255,0.06)', 'line-width':0.5 },
-  });
+map.on('load', async () => {
+  try {
+    setStatus('Loading MHI tracts...');
+    const mhiHeader = await mapboxPmTiles.PmTilesSource.getHeader(R2_MHI);
+    map.addSource('mhi', {
+      type: mapboxPmTiles.PmTilesSource.SOURCE_TYPE,
+      url: R2_MHI,
+      minzoom: mhiHeader.minZoom,
+      maxzoom: mhiHeader.maxZoom,
+    });
+    map.addLayer({
+      id:'mhi-fill', type:'fill', source:'mhi', 'source-layer':'mhi_tracts',
+      paint:{
+        'fill-color':['interpolate',['linear'],['coalesce',['get','mhi'],['get','MHI'],0],
+          0,'#1a0533', 30000,'#4a0e6b', 60000,'#8b1a8b',
+          90000,'#c4396e', 120000,'#f06b2e', 160000,'#ffd166'],
+        'fill-opacity':['interpolate',['linear'],['zoom'], 8,0.75, 13,0.55],
+      },
+    });
+    map.addLayer({
+      id:'mhi-outline', type:'line', source:'mhi', 'source-layer':'mhi_tracts',
+      paint:{ 'line-color':'rgba(255,255,255,0.06)', 'line-width':0.5 },
+    });
 
-  setStatus('Loading isochrones…');
-  map.addSource('iso', { type:'vector', url:`pmtiles://${R2_ISO}` });
-  map.addLayer({
-    id:'iso-fill', type:'fill', source:'iso', 'source-layer':'isochrones',
-    filter:['<=',['get','contour'], activeMinutes],
-    paint:{
-      'fill-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
-      'fill-opacity':['interpolate',['linear'],['zoom'], 9,0.30, 13,0.50],
-    },
-  });
-  map.addLayer({
-    id:'iso-line', type:'line', source:'iso', 'source-layer':'isochrones',
-    filter:['<=',['get','contour'], activeMinutes],
-    paint:{
-      'line-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
-      'line-opacity':0.6, 'line-width':0.8,
-    },
-  });
+    setStatus('Loading isochrones...');
+    const isoHeader = await mapboxPmTiles.PmTilesSource.getHeader(R2_ISO);
+    map.addSource('iso', {
+      type: mapboxPmTiles.PmTilesSource.SOURCE_TYPE,
+      url: R2_ISO,
+      minzoom: isoHeader.minZoom,
+      maxzoom: isoHeader.maxZoom,
+    });
+    map.addLayer({
+      id:'iso-fill', type:'fill', source:'iso', 'source-layer':'isochrones',
+      filter:['<=',['get','contour'], activeMinutes],
+      paint:{
+        'fill-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
+        'fill-opacity':['interpolate',['linear'],['zoom'], 9,0.30, 13,0.50],
+      },
+    });
+    map.addLayer({
+      id:'iso-line', type:'line', source:'iso', 'source-layer':'isochrones',
+      filter:['<=',['get','contour'], activeMinutes],
+      paint:{
+        'line-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
+        'line-opacity':0.6, 'line-width':0.8,
+      },
+    });
 
-  setStatus('Loading retail POIs…');
-  map.addSource('poi', { type:'vector', url:`pmtiles://${R2_POI}` });
-  map.addLayer({
-    id:'poi-circle', type:'circle', source:'poi', 'source-layer':'retail_pois',
-    minzoom:12,
-    paint:{
-      'circle-radius':['interpolate',['linear'],['zoom'], 12,2, 15,5],
-      'circle-color':'#ff6b35', 'circle-opacity':0.75,
-      'circle-stroke-width':0.5, 'circle-stroke-color':'rgba(255,107,53,0.4)',
-    },
-  });
+    setStatus('Loading retail POIs...');
+    const poiHeader = await mapboxPmTiles.PmTilesSource.getHeader(R2_POI);
+    map.addSource('poi', {
+      type: mapboxPmTiles.PmTilesSource.SOURCE_TYPE,
+      url: R2_POI,
+      minzoom: poiHeader.minZoom,
+      maxzoom: poiHeader.maxZoom,
+    });
+    map.addLayer({
+      id:'poi-circle', type:'circle', source:'poi', 'source-layer':'retail_pois',
+      minzoom:12,
+      paint:{
+        'circle-radius':['interpolate',['linear'],['zoom'], 12,2, 15,5],
+        'circle-color':'#ff6b35', 'circle-opacity':0.75,
+        'circle-stroke-width':0.5, 'circle-stroke-color':'rgba(255,107,53,0.4)',
+      },
+    });
 
-  // Init toggle states
-  document.querySelectorAll('.toggle-pill').forEach(p => p.classList.remove('inactive'));
+    document.querySelectorAll('.toggle-pill').forEach(p => p.classList.remove('inactive'));
+    hideLoader();
 
-  hideLoader();
+  } catch(err) {
+    setStatus('Error: ' + err.message);
+    console.error('Map load error:', err);
+  }
 });
 
 // Walk filter
@@ -314,7 +294,7 @@ document.querySelectorAll('.walk-step').forEach(btn => {
     activeMinutes = parseInt(btn.dataset.minutes);
     document.querySelectorAll('.walk-step').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('walk-value').textContent = `≤ ${activeMinutes} min walk`;
+    document.getElementById('walk-value').innerHTML = '&le; ' + activeMinutes + ' min walk';
     if (map.getLayer('iso-fill')) {
       map.setFilter('iso-fill', ['<=',['get','contour'], activeMinutes]);
       map.setFilter('iso-line', ['<=',['get','contour'], activeMinutes]);
@@ -340,10 +320,10 @@ const ttLabel = document.getElementById('tt-label');
 const ttValue = document.getElementById('tt-value');
 const ttSub   = document.getElementById('tt-sub');
 
-function showTip(e, label, value, sub='') {
+function showTip(e, label, value, sub) {
   ttLabel.textContent = label;
   ttValue.textContent = value;
-  ttSub.textContent   = sub;
+  ttSub.textContent   = sub || '';
   tooltip.style.display = 'block';
   tooltip.style.left = (e.point.x + 14) + 'px';
   tooltip.style.top  = (e.point.y - 10) + 'px';
@@ -353,29 +333,27 @@ function hideTip() { tooltip.style.display = 'none'; }
 map.on('mousemove','mhi-fill', e => {
   if (!layerVisible.mhi) return;
   const p = e.features[0].properties;
-  const v = p.mhi;
+  const v = p.mhi || p.MHI;
   showTip(e, 'Median Household Income',
     (!v || v <= 0) ? 'No data' : '$' + Math.round(v).toLocaleString(),
-    p.GEOID ? `Tract ${String(p.GEOID).slice(-6)}` : '');
+    p.GEOID ? 'Tract ' + String(p.GEOID).slice(-6) : '');
 });
 map.on('mouseleave','mhi-fill', hideTip);
-
 map.on('mousemove','iso-fill', e => {
   if (!layerVisible.iso) return;
   const p = e.features[0].properties;
-  showTip(e, 'Walk Time to Retail', `${p.contour} min`, p.name||'');
+  showTip(e, 'Walk Time to Retail', p.contour + ' min', p.name || '');
 });
 map.on('mouseleave','iso-fill', hideTip);
-
 map.on('mousemove','poi-circle', e => {
   if (!layerVisible.poi) return;
   const p = e.features[0].properties;
-  showTip(e, 'Retail / Grocery', p.name||p.fsq_id||'POI', p.category||p.fsq_category||'');
+  showTip(e, 'Retail / Grocery', p.name || p.fsq_id || 'POI', p.category || p.fsq_category || '');
   map.getCanvas().style.cursor = 'pointer';
 });
-map.on('mouseleave','poi-circle', () => { hideTip(); map.getCanvas().style.cursor=''; });
-map.on('mouseenter','iso-fill',   () => { map.getCanvas().style.cursor='crosshair'; });
-map.on('mouseleave','iso-fill',   () => { map.getCanvas().style.cursor=''; });
+map.on('mouseleave','poi-circle', () => { hideTip(); map.getCanvas().style.cursor = ''; });
+map.on('mouseenter','iso-fill',   () => { map.getCanvas().style.cursor = 'crosshair'; });
+map.on('mouseleave','iso-fill',   () => { map.getCanvas().style.cursor = ''; });
 </script>
 </body>
 </html>
