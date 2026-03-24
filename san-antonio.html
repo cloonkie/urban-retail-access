@@ -19,6 +19,8 @@
     }
     html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
     #map { position:absolute; inset:0; }
+
+    /* ── Topbar ── */
     #topbar {
       position:absolute; top:0; left:0; right:0; height:52px;
       background:rgba(10,12,15,0.92); backdrop-filter:blur(12px);
@@ -53,32 +55,96 @@
     .toggle-pill.inactive { color:var(--muted) !important; }
     .toggle-dot { width:8px; height:8px; border-radius:50%; border:1.5px solid currentColor; transition:background 0.15s; }
     .toggle-pill:not(.inactive) .toggle-dot { background:currentColor; }
-    #bottom-panel {
-      position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
-      z-index:100; display:flex; flex-direction:column; align-items:center; gap:10px;
+
+    /* ── Side panel ── */
+    #side-panel {
+      position:absolute; top:62px; right:16px; z-index:100;
+      display:flex; flex-direction:column; gap:8px;
+      width:200px;
     }
-    #walk-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-align:center; }
-    #walk-label strong { font-size:14px; font-weight:500; color:var(--accent); display:block; margin-bottom:2px; }
-    #walk-slider-row { display:flex; align-items:center; gap:8px; }
-    .walk-step {
-      font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.06em;
-      cursor:pointer; padding:5px 10px; border:1px solid var(--border2);
-      border-radius:3px; background:rgba(10,12,15,0.85); backdrop-filter:blur(8px);
-      transition:all 0.15s; color:var(--muted);
-    }
-    .walk-step:hover { color:var(--text); }
-    .walk-step.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.08); }
-    #legend {
-      position:absolute; bottom:110px; right:20px; z-index:100;
+
+    .panel-card {
       background:rgba(10,12,15,0.88); backdrop-filter:blur(12px);
-      border:1px solid var(--border); border-radius:6px; padding:14px 16px; min-width:170px;
+      border:1px solid var(--border); border-radius:6px;
+      padding:12px 14px;
     }
-    .legend-title { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
-    .legend-gradient { height:8px; border-radius:2px; margin-bottom:4px; background:linear-gradient(to right,var(--mhi-1),var(--mhi-2),var(--mhi-3),var(--mhi-4),var(--mhi-5),var(--mhi-6)); }
-    .legend-labels { display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-bottom:14px; }
-    .legend-iso-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-    .legend-iso-swatch { width:28px; height:6px; border-radius:2px; opacity:0.85; }
-    .legend-iso-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); }
+
+    .panel-label {
+      font-family:'DM Mono',monospace; font-size:9px; font-weight:500;
+      letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);
+      margin-bottom:8px; display:block;
+    }
+
+    /* Transport mode */
+    #mode-btns { display:flex; gap:4px; flex-wrap:wrap; }
+    .mode-btn {
+      font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.06em;
+      text-transform:uppercase; color:var(--muted);
+      background:transparent; border:1px solid var(--border2);
+      padding:4px 8px; border-radius:3px; cursor:pointer;
+      transition:all 0.15s; flex:1; text-align:center;
+    }
+    .mode-btn:hover { color:var(--text); border-color:var(--border2); }
+    .mode-btn.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.08); }
+
+    /* Walk time filter */
+    #walk-btns { display:flex; gap:4px; }
+    .walk-btn {
+      font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.04em;
+      color:var(--muted); background:transparent; border:1px solid var(--border2);
+      padding:4px 0; border-radius:3px; cursor:pointer;
+      transition:all 0.15s; flex:1; text-align:center;
+    }
+    .walk-btn:hover { color:var(--text); }
+    .walk-btn.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.08); }
+
+    /* Opacity sliders */
+    .slider-row {
+      display:flex; align-items:center; gap:8px; margin-bottom:6px;
+    }
+    .slider-row:last-child { margin-bottom:0; }
+    .slider-tag {
+      font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.06em;
+      text-transform:uppercase; color:var(--muted); width:26px; flex-shrink:0;
+    }
+    .slider-val {
+      font-family:'DM Mono',monospace; font-size:8px; color:var(--muted);
+      width:28px; text-align:right; flex-shrink:0;
+    }
+    input[type=range] {
+      flex:1; -webkit-appearance:none; appearance:none;
+      height:2px; border-radius:2px; outline:none; cursor:pointer;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, var(--border2) 50%, var(--border2) 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; appearance:none;
+      width:10px; height:10px; border-radius:50%;
+      background:var(--accent); cursor:pointer;
+      border:1.5px solid var(--bg);
+    }
+    input[type=range].iso-range {
+      background: linear-gradient(to right, var(--iso-5) 0%, var(--iso-5) 50%, var(--border2) 50%, var(--border2) 100%);
+    }
+    input[type=range].iso-range::-webkit-slider-thumb { background:var(--iso-5); }
+    input[type=range].poi-range {
+      background: linear-gradient(to right, var(--accent2) 0%, var(--accent2) 50%, var(--border2) 50%, var(--border2) 100%);
+    }
+    input[type=range].poi-range::-webkit-slider-thumb { background:var(--accent2); }
+
+    /* Legend */
+    #legend {
+      position:absolute; bottom:24px; right:16px; z-index:100;
+      background:rgba(10,12,15,0.88); backdrop-filter:blur(12px);
+      border:1px solid var(--border); border-radius:6px; padding:12px 14px; min-width:170px;
+    }
+    .legend-title { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    .legend-gradient { height:6px; border-radius:2px; margin-bottom:3px; background:linear-gradient(to right,var(--mhi-1),var(--mhi-2),var(--mhi-3),var(--mhi-4),var(--mhi-5),var(--mhi-6)); }
+    .legend-labels { display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:8px; color:var(--muted); margin-bottom:12px; }
+    .legend-iso-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+    .legend-iso-swatch { width:22px; height:5px; border-radius:2px; opacity:0.85; }
+    .legend-iso-label { font-family:'DM Mono',monospace; font-size:8px; color:var(--muted); }
+
+    /* Tooltip */
     #tooltip {
       position:absolute; z-index:200; pointer-events:none;
       background:rgba(10,12,15,0.95); border:1px solid var(--border2);
@@ -89,6 +155,8 @@
     #tooltip .tt-label { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
     #tooltip .tt-value { font-size:15px; font-weight:500; color:var(--accent); }
     #tooltip .tt-sub   { font-size:9px; color:var(--muted); margin-top:3px; }
+
+    /* Loader */
     #loader {
       position:absolute; inset:0; background:var(--bg); z-index:500;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -107,7 +175,7 @@
     }
     .loader-status { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--muted); }
     .mapboxgl-ctrl-attrib { font-size:9px !important; background:rgba(10,12,15,0.7) !important; }
-    .mapboxgl-ctrl-bottom-right { bottom:90px !important; }
+    .mapboxgl-ctrl-bottom-right { bottom:220px !important; }
   </style>
 </head>
 <body>
@@ -121,6 +189,7 @@
 
 <div id="map"></div>
 
+<!-- Topbar -->
 <div id="topbar">
   <div id="wordmark">Urban <span>Retail</span> Access</div>
   <div class="divider"></div>
@@ -144,30 +213,65 @@
   </div>
 </div>
 
-<div id="bottom-panel">
-  <div id="walk-label">
-    <strong id="walk-value">&le; 15 min walk</strong>
-    isochrone filter
+<!-- Side panel -->
+<div id="side-panel">
+
+  <!-- Transport mode -->
+  <div class="panel-card">
+    <span class="panel-label">Transport Mode</span>
+    <div id="mode-btns">
+      <div class="mode-btn active" data-mode="pedestrian">Walk</div>
+      <div class="mode-btn" data-mode="bicycle">Bike</div>
+      <div class="mode-btn" data-mode="auto">Drive</div>
+    </div>
   </div>
-  <div id="walk-slider-row">
-    <div class="walk-step" data-minutes="5">5 min</div>
-    <div class="walk-step" data-minutes="10">10 min</div>
-    <div class="walk-step active" data-minutes="15">15 min</div>
-    <div class="walk-step" data-minutes="20">20 min</div>
+
+  <!-- Walk time filter -->
+  <div class="panel-card">
+    <span class="panel-label">Max Travel Time</span>
+    <div id="walk-btns">
+      <div class="walk-btn" data-minutes="5">5m</div>
+      <div class="walk-btn" data-minutes="10">10m</div>
+      <div class="walk-btn active" data-minutes="15">15m</div>
+      <div class="walk-btn" data-minutes="20">20m</div>
+    </div>
   </div>
+
+  <!-- Opacity controls -->
+  <div class="panel-card">
+    <span class="panel-label">Layer Opacity</span>
+    <div class="slider-row">
+      <span class="slider-tag">MHI</span>
+      <input type="range" id="mhi-opacity" min="0" max="100" value="70" />
+      <span class="slider-val" id="mhi-opacity-val">70%</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-tag">ISO</span>
+      <input type="range" id="iso-opacity" class="iso-range" min="0" max="100" value="40" />
+      <span class="slider-val" id="iso-opacity-val">40%</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-tag">POI</span>
+      <input type="range" id="poi-opacity" class="poi-range" min="0" max="100" value="75" />
+      <span class="slider-val" id="poi-opacity-val">75%</span>
+    </div>
+  </div>
+
 </div>
 
+<!-- Legend -->
 <div id="legend">
   <div class="legend-title">Median Household Income</div>
   <div class="legend-gradient"></div>
   <div class="legend-labels"><span>Low</span><span>High</span></div>
-  <div class="legend-title">Walk Time to Retail</div>
+  <div class="legend-title">Travel Time to Retail</div>
   <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-5)"></div><div class="legend-iso-label">5 min</div></div>
   <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-10)"></div><div class="legend-iso-label">10 min</div></div>
   <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-15)"></div><div class="legend-iso-label">15 min</div></div>
   <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-20)"></div><div class="legend-iso-label">20 min</div></div>
 </div>
 
+<!-- Tooltip -->
 <div id="tooltip">
   <div class="tt-label" id="tt-label">Tract</div>
   <div class="tt-value" id="tt-value">&mdash;</div>
@@ -182,12 +286,10 @@ const R2_POI = 'https://pub-846dd985fe5743b1a4466cdbb1c48bcc.r2.dev/cities/san-a
 const CITY_CENTER = [-98.4936, 29.4241];
 const CITY_ZOOM   = 10;
 
-// Register PMTiles custom source for Mapbox GL JS v3
 mapboxgl.Style.setSourceType(
   mapboxPmTiles.PmTilesSource.SOURCE_TYPE,
   mapboxPmTiles.PmTilesSource
 );
-
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const map = new mapboxgl.Map({
@@ -201,9 +303,25 @@ const map = new mapboxgl.Map({
 
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
 
+// ── State ─────────────────────────────────────────────────────
 let activeMinutes = 15;
+let activeMode    = 'pedestrian';
 let layerVisible  = { mhi: true, iso: true, poi: true };
+let opacity       = { mhi: 0.70, iso: 0.40, poi: 0.75 };
 
+// NOTE: All isochrones are currently pedestrian mode.
+// Transport mode selector is wired up for future per-mode PMTiles.
+// When bike/drive PMTiles are added to R2 at:
+//   cities/san-antonio/isochrones_bicycle.pmtiles
+//   cities/san-antonio/isochrones_auto.pmtiles
+// update R2_ISO_MODES below and uncomment the source-swap logic.
+const R2_ISO_MODES = {
+  pedestrian: R2_ISO,
+  bicycle:    R2_ISO,  // placeholder — swap when available
+  auto:       R2_ISO,  // placeholder — swap when available
+};
+
+// ── Loader ────────────────────────────────────────────────────
 const loaderEl = document.getElementById('loader');
 const statusEl = document.getElementById('loader-status');
 function setStatus(msg) { statusEl.textContent = msg; }
@@ -212,6 +330,7 @@ function hideLoader() {
   setTimeout(() => loaderEl.style.display = 'none', 600);
 }
 
+// ── Map load ──────────────────────────────────────────────────
 map.on('load', async () => {
   try {
     setStatus('Loading MHI tracts...');
@@ -228,7 +347,7 @@ map.on('load', async () => {
         'fill-color':['interpolate',['linear'],['coalesce',['get','mhi'],['get','MHI'],0],
           0,'#1a0533', 30000,'#4a0e6b', 60000,'#8b1a8b',
           90000,'#c4396e', 120000,'#f06b2e', 160000,'#ffd166'],
-        'fill-opacity':['interpolate',['linear'],['zoom'], 8,0.75, 13,0.55],
+        'fill-opacity': opacity.mhi,
       },
     });
     map.addLayer({
@@ -249,7 +368,7 @@ map.on('load', async () => {
       filter:['<=',['get','contour'], activeMinutes],
       paint:{
         'fill-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
-        'fill-opacity':['interpolate',['linear'],['zoom'], 9,0.30, 13,0.50],
+        'fill-opacity': opacity.iso,
       },
     });
     map.addLayer({
@@ -257,7 +376,8 @@ map.on('load', async () => {
       filter:['<=',['get','contour'], activeMinutes],
       paint:{
         'line-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
-        'line-opacity':0.6, 'line-width':0.8,
+        'line-opacity': Math.min(opacity.iso * 1.5, 1.0),
+        'line-width': 0.8,
       },
     });
 
@@ -271,15 +391,18 @@ map.on('load', async () => {
     });
     map.addLayer({
       id:'poi-circle', type:'circle', source:'poi', 'source-layer':'retail_pois',
-      minzoom:12,
+      minzoom: 12,
       paint:{
         'circle-radius':['interpolate',['linear'],['zoom'], 12,2, 15,5],
-        'circle-color':'#ff6b35', 'circle-opacity':0.75,
-        'circle-stroke-width':0.5, 'circle-stroke-color':'rgba(255,107,53,0.4)',
+        'circle-color':'#ff6b35',
+        'circle-opacity': opacity.poi,
+        'circle-stroke-width':0.5,
+        'circle-stroke-color':'rgba(255,107,53,0.4)',
       },
     });
 
     document.querySelectorAll('.toggle-pill').forEach(p => p.classList.remove('inactive'));
+    updateSliderTracks();
     hideLoader();
 
   } catch(err) {
@@ -288,13 +411,25 @@ map.on('load', async () => {
   }
 });
 
-// Walk filter
-document.querySelectorAll('.walk-step').forEach(btn => {
+// ── Transport mode ────────────────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeMode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Future: swap iso source when per-mode PMTiles are available
+    // For now, all modes use the same pedestrian isochrones
+    // When ready: map.getSource('iso').setUrl(R2_ISO_MODES[activeMode]);
+    console.log('Mode:', activeMode, '(per-mode PMTiles coming soon)');
+  });
+});
+
+// ── Walk time filter ──────────────────────────────────────────
+document.querySelectorAll('.walk-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     activeMinutes = parseInt(btn.dataset.minutes);
-    document.querySelectorAll('.walk-step').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.walk-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('walk-value').innerHTML = '&le; ' + activeMinutes + ' min walk';
     if (map.getLayer('iso-fill')) {
       map.setFilter('iso-fill', ['<=',['get','contour'], activeMinutes]);
       map.setFilter('iso-line', ['<=',['get','contour'], activeMinutes]);
@@ -302,7 +437,43 @@ document.querySelectorAll('.walk-step').forEach(btn => {
   });
 });
 
-// Layer toggles
+// ── Opacity sliders ───────────────────────────────────────────
+function updateSliderTracks() {
+  ['mhi', 'iso', 'poi'].forEach(key => {
+    const input = document.getElementById(key + '-opacity');
+    if (!input) return;
+    const pct = input.value + '%';
+    const color = key === 'mhi' ? '#c4396e' : key === 'iso' ? '#00e5ff' : '#ff6b35';
+    input.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${pct}, var(--border2) ${pct}, var(--border2) 100%)`;
+  });
+}
+
+document.getElementById('mhi-opacity').addEventListener('input', function() {
+  const val = parseInt(this.value) / 100;
+  opacity.mhi = val;
+  document.getElementById('mhi-opacity-val').textContent = this.value + '%';
+  updateSliderTracks();
+  if (map.getLayer('mhi-fill')) map.setPaintProperty('mhi-fill', 'fill-opacity', val);
+});
+
+document.getElementById('iso-opacity').addEventListener('input', function() {
+  const val = parseInt(this.value) / 100;
+  opacity.iso = val;
+  document.getElementById('iso-opacity-val').textContent = this.value + '%';
+  updateSliderTracks();
+  if (map.getLayer('iso-fill')) map.setPaintProperty('iso-fill', 'fill-opacity', val);
+  if (map.getLayer('iso-line')) map.setPaintProperty('iso-line', 'line-opacity', Math.min(val * 1.5, 1.0));
+});
+
+document.getElementById('poi-opacity').addEventListener('input', function() {
+  const val = parseInt(this.value) / 100;
+  opacity.poi = val;
+  document.getElementById('poi-opacity-val').textContent = this.value + '%';
+  updateSliderTracks();
+  if (map.getLayer('poi-circle')) map.setPaintProperty('poi-circle', 'circle-opacity', val);
+});
+
+// ── Layer toggles ─────────────────────────────────────────────
 const LAYER_MAP = { mhi:['mhi-fill','mhi-outline'], iso:['iso-fill','iso-line'], poi:['poi-circle'] };
 document.querySelectorAll('.toggle-pill').forEach(pill => {
   pill.addEventListener('click', () => {
@@ -314,7 +485,7 @@ document.querySelectorAll('.toggle-pill').forEach(pill => {
   });
 });
 
-// Tooltips
+// ── Tooltips ──────────────────────────────────────────────────
 const tooltip = document.getElementById('tooltip');
 const ttLabel = document.getElementById('tt-label');
 const ttValue = document.getElementById('tt-value');
@@ -339,16 +510,19 @@ map.on('mousemove','mhi-fill', e => {
     p.GEOID ? 'Tract ' + String(p.GEOID).slice(-6) : '');
 });
 map.on('mouseleave','mhi-fill', hideTip);
+
 map.on('mousemove','iso-fill', e => {
   if (!layerVisible.iso) return;
   const p = e.features[0].properties;
-  showTip(e, 'Walk Time to Retail', p.contour + ' min', p.name || '');
+  const modeLabel = activeMode === 'pedestrian' ? 'Walk' : activeMode === 'bicycle' ? 'Bike' : 'Drive';
+  showTip(e, modeLabel + ' Time to Retail', p.contour + ' min', p.poi_name || '');
 });
 map.on('mouseleave','iso-fill', hideTip);
+
 map.on('mousemove','poi-circle', e => {
   if (!layerVisible.poi) return;
   const p = e.features[0].properties;
-  showTip(e, 'Retail / Grocery', p.name || p.fsq_id || 'POI', p.category || p.fsq_category || '');
+  showTip(e, 'Retail / Grocery', p.name || p.fsq_id || 'POI', p.fsq_category_labels || p.category || '');
   map.getCanvas().style.cursor = 'pointer';
 });
 map.on('mouseleave','poi-circle', () => { hideTip(); map.getCanvas().style.cursor = ''; });
