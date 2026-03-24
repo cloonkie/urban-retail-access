@@ -6,7 +6,7 @@
   <title>Urban Retail Access — Chicago</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/pmtiles@2.11.0/dist/pmtiles.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -229,7 +229,7 @@ const CITY_CENTER = [-87.6298, 41.8781];
 const CITY_ZOOM   = 11;
 
 const protocol = new pmtiles.Protocol();
-mapboxgl.addProtocol('pmtiles', protocol.tile);
+mapboxgl.addProtocol('pmtiles', (request) => protocol.tile(request));
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const map = new mapboxgl.Map({
