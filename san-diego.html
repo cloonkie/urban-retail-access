@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban Retail Access — San Diego</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0a0c0f;
+      --surface: #111418;
+      --border:  #1e2329;
+      --border2: #2a3040;
+      --text:    #e8eaf0;
+      --muted:   #6b7280;
+      --accent:  #00e5ff;
+      --accent2: #ff6b35;
+      --mhi-1: #1a0533; --mhi-2: #4a0e6b; --mhi-3: #8b1a8b;
+      --mhi-4: #c4396e; --mhi-5: #f06b2e; --mhi-6: #ffd166;
+      --iso-5: #00e5ff; --iso-10: #0099cc; --iso-15: #005a8e; --iso-20: #002d5a;
+    }
+    html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+    #map { position:absolute; inset:0; }
+
+    /* Topbar */
+    #topbar {
+      position:absolute; top:0; left:0; right:0; height:52px;
+      background:rgba(10,12,15,0.92); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 20px; gap:20px; z-index:100;
+    }
+    #wordmark {
+      font-family:'Syne',sans-serif; font-weight:800; font-size:13px;
+      letter-spacing:0.12em; text-transform:uppercase; color:var(--text); white-space:nowrap;
+    }
+    #wordmark span { color:var(--accent); }
+    .divider { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
+
+    /* City nav */
+    #city-nav { display:flex; gap:3px; overflow-x:auto; }
+    #city-nav::-webkit-scrollbar { display:none; }
+    .city-btn {
+      font-family:'DM Mono',monospace; font-size:10px; font-weight:500;
+      letter-spacing:0.06em; text-transform:uppercase; color:var(--muted);
+      background:transparent; border:1px solid transparent;
+      padding:4px 10px; border-radius:3px; cursor:pointer;
+      white-space:nowrap; transition:all 0.15s; text-decoration:none;
+      display:inline-block; line-height:1.6;
+    }
+    .city-btn:hover { color:var(--text); border-color:var(--border2); }
+    .city-btn.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.06); }
+
+    /* Layer toggles */
+    #layer-toggles { display:flex; gap:12px; margin-left:auto; flex-shrink:0; }
+    .toggle-pill {
+      font-family:'DM Mono',monospace; font-size:10px; font-weight:500;
+      letter-spacing:0.06em; text-transform:uppercase;
+      display:flex; align-items:center; gap:6px;
+      cursor:pointer; transition:color 0.15s; user-select:none;
+    }
+    .toggle-pill[data-layer="mhi"] { color:#c4396e; }
+    .toggle-pill[data-layer="iso"] { color:#00e5ff; }
+    .toggle-pill[data-layer="poi"] { color:#ff6b35; }
+    .toggle-pill.inactive { color:var(--muted) !important; }
+    .toggle-dot {
+      width:8px; height:8px; border-radius:50%;
+      border:1.5px solid currentColor; transition:background 0.15s;
+    }
+    .toggle-pill:not(.inactive) .toggle-dot { background:currentColor; }
+
+    /* Walk filter */
+    #bottom-panel {
+      position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+      z-index:100; display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    #walk-label {
+      font-family:'DM Mono',monospace; font-size:10px;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--muted); text-align:center;
+    }
+    #walk-label strong { font-size:14px; font-weight:500; color:var(--accent); display:block; margin-bottom:2px; }
+    #walk-slider-row { display:flex; align-items:center; gap:8px; }
+    .walk-step {
+      font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.06em;
+      cursor:pointer; padding:5px 10px; border:1px solid var(--border2);
+      border-radius:3px; background:rgba(10,12,15,0.85); backdrop-filter:blur(8px);
+      transition:all 0.15s; color:var(--muted);
+    }
+    .walk-step:hover { color:var(--text); }
+    .walk-step.active { color:var(--accent); border-color:var(--accent); background:rgba(0,229,255,0.08); }
+
+    /* Legend */
+    #legend {
+      position:absolute; bottom:110px; right:20px; z-index:100;
+      background:rgba(10,12,15,0.88); backdrop-filter:blur(12px);
+      border:1px solid var(--border); border-radius:6px;
+      padding:14px 16px; min-width:170px;
+    }
+    .legend-title {
+      font-family:'DM Mono',monospace; font-size:9px; font-weight:500;
+      letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;
+    }
+    .legend-gradient {
+      height:8px; border-radius:2px; margin-bottom:4px;
+      background:linear-gradient(to right,var(--mhi-1),var(--mhi-2),var(--mhi-3),var(--mhi-4),var(--mhi-5),var(--mhi-6));
+    }
+    .legend-labels {
+      display:flex; justify-content:space-between;
+      font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-bottom:14px;
+    }
+    .legend-iso-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .legend-iso-swatch { width:28px; height:6px; border-radius:2px; opacity:0.85; }
+    .legend-iso-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); }
+
+    /* Tooltip */
+    #tooltip {
+      position:absolute; z-index:200; pointer-events:none;
+      background:rgba(10,12,15,0.95); border:1px solid var(--border2);
+      border-radius:5px; padding:10px 14px;
+      font-family:'DM Mono',monospace; font-size:11px; color:var(--text);
+      max-width:220px; display:none; backdrop-filter:blur(12px);
+    }
+    #tooltip .tt-label { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+    #tooltip .tt-value { font-size:15px; font-weight:500; color:var(--accent); }
+    #tooltip .tt-sub   { font-size:9px; color:var(--muted); margin-top:3px; }
+
+    /* Loader */
+    #loader {
+      position:absolute; inset:0; background:var(--bg); z-index:500;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:16px; transition:opacity 0.5s ease;
+    }
+    #loader.hidden { opacity:0; pointer-events:none; }
+    .loader-word {
+      font-family:'Syne',sans-serif; font-weight:800; font-size:22px;
+      letter-spacing:0.15em; text-transform:uppercase; color:var(--text);
+    }
+    .loader-word span { color:var(--accent); }
+    .loader-city {
+      font-family:'DM Mono',monospace; font-size:11px;
+      letter-spacing:0.2em; text-transform:uppercase; color:var(--muted);
+    }
+    .loader-bar-wrap { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .loader-bar { height:100%; background:var(--accent); border-radius:2px; animation:loadpulse 1.6s ease-in-out infinite; }
+    @keyframes loadpulse {
+      0%   { width:0%;  margin-left:0;    }
+      50%  { width:60%; margin-left:20%;  }
+      100% { width:0%;  margin-left:100%; }
+    }
+    .loader-status { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.08em; color:var(--muted); }
+    .mapboxgl-ctrl-attrib { font-size:9px !important; background:rgba(10,12,15,0.7) !important; }
+    .mapboxgl-ctrl-bottom-right { bottom:90px !important; }
+  </style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-word">Urban <span>Retail</span> Access</div>
+  <div class="loader-city">San Diego</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-status" id="loader-status">Initializing…</div>
+</div>
+
+<div id="map"></div>
+
+<div id="topbar">
+  <div id="wordmark">Urban <span>Retail</span> Access</div>
+  <div class="divider"></div>
+  <div id="city-nav">
+    <a href="index.html" class="city-btn">NYC</a>
+    <a href="los-angeles.html" class="city-btn">LA</a>
+    <a href="chicago.html" class="city-btn">CHI</a>
+    <a href="houston.html" class="city-btn">HOU</a>
+    <a href="phoenix.html" class="city-btn">PHX</a>
+    <a href="san-antonio.html" class="city-btn">SAT</a>
+    <a href="philadelphia.html" class="city-btn">PHL</a>
+    <a href="san-diego.html" class="city-btn active">SAN</a>
+    <a href="dallas.html" class="city-btn">DAL</a>
+    <a href="fort-worth.html" class="city-btn">FTW</a>
+  </div>
+  <div class="divider"></div>
+  <div id="layer-toggles">
+    <div class="toggle-pill" data-layer="mhi"><div class="toggle-dot"></div> MHI</div>
+    <div class="toggle-pill" data-layer="iso"><div class="toggle-dot"></div> Walk</div>
+    <div class="toggle-pill" data-layer="poi"><div class="toggle-dot"></div> POI</div>
+  </div>
+</div>
+
+<div id="bottom-panel">
+  <div id="walk-label">
+    <strong id="walk-value">≤ 15 min walk</strong>
+    isochrone filter
+  </div>
+  <div id="walk-slider-row">
+    <div class="walk-step" data-minutes="5">5 min</div>
+    <div class="walk-step" data-minutes="10">10 min</div>
+    <div class="walk-step active" data-minutes="15">15 min</div>
+    <div class="walk-step" data-minutes="20">20 min</div>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="legend-title">Median Household Income</div>
+  <div class="legend-gradient"></div>
+  <div class="legend-labels"><span>Low</span><span>High</span></div>
+  <div class="legend-title">Walk Time to Retail</div>
+  <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-5)"></div><div class="legend-iso-label">5 min</div></div>
+  <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-10)"></div><div class="legend-iso-label">10 min</div></div>
+  <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-15)"></div><div class="legend-iso-label">15 min</div></div>
+  <div class="legend-iso-row"><div class="legend-iso-swatch" style="background:var(--iso-20)"></div><div class="legend-iso-label">20 min</div></div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-label" id="tt-label">Tract</div>
+  <div class="tt-value" id="tt-value">—</div>
+  <div class="tt-sub"   id="tt-sub"></div>
+</div>
+
+<script>
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiY2xvb25rIiwiYSI6ImNtbjQxdDF1NzA0YXgycXByNXVuMnllYW4ifQ.3NHqjWQmGopsx5Xy1uHkQg';
+const R2_MHI = 'https://pub-846dd985fe5743b1a4466cdbb1c48bcc.r2.dev/cities/san-diego/mhi_tracts.pmtiles';
+const R2_ISO = 'https://pub-846dd985fe5743b1a4466cdbb1c48bcc.r2.dev/cities/san-diego/isochrones.pmtiles';
+const R2_POI = 'https://pub-846dd985fe5743b1a4466cdbb1c48bcc.r2.dev/cities/san-diego/retail_pois.pmtiles';
+const CITY_CENTER = [-117.1611, 32.7157];
+const CITY_ZOOM   = 10;
+
+const protocol = new pmtiles.Protocol();
+mapboxgl.addProtocol('pmtiles', protocol.tile);
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: CITY_CENTER,
+  zoom: CITY_ZOOM,
+  minZoom: 8, maxZoom: 16,
+  antialias: true,
+});
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+let activeMinutes = 15;
+let layerVisible  = { mhi: true, iso: true, poi: true };
+
+const loaderEl = document.getElementById('loader');
+const statusEl = document.getElementById('loader-status');
+function setStatus(msg) { statusEl.textContent = msg; }
+function hideLoader() {
+  loaderEl.classList.add('hidden');
+  setTimeout(() => loaderEl.style.display = 'none', 600);
+}
+
+map.on('load', () => {
+  setStatus('Loading MHI tracts…');
+  map.addSource('mhi', { type:'vector', url:`pmtiles://${R2_MHI}` });
+  map.addLayer({
+    id:'mhi-fill', type:'fill', source:'mhi', 'source-layer':'mhi_tracts',
+    paint:{
+      'fill-color':['interpolate',['linear'],['coalesce',['get','mhi'],0],
+        0,'#1a0533', 30000,'#4a0e6b', 60000,'#8b1a8b',
+        90000,'#c4396e', 120000,'#f06b2e', 160000,'#ffd166'],
+      'fill-opacity':['interpolate',['linear'],['zoom'], 8,0.75, 13,0.55],
+    },
+  });
+  map.addLayer({
+    id:'mhi-outline', type:'line', source:'mhi', 'source-layer':'mhi_tracts',
+    paint:{ 'line-color':'rgba(255,255,255,0.06)', 'line-width':0.5 },
+  });
+
+  setStatus('Loading isochrones…');
+  map.addSource('iso', { type:'vector', url:`pmtiles://${R2_ISO}` });
+  map.addLayer({
+    id:'iso-fill', type:'fill', source:'iso', 'source-layer':'isochrones',
+    filter:['<=',['get','contour'], activeMinutes],
+    paint:{
+      'fill-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
+      'fill-opacity':['interpolate',['linear'],['zoom'], 9,0.30, 13,0.50],
+    },
+  });
+  map.addLayer({
+    id:'iso-line', type:'line', source:'iso', 'source-layer':'isochrones',
+    filter:['<=',['get','contour'], activeMinutes],
+    paint:{
+      'line-color':['match',['get','contour'], 5,'#00e5ff', 10,'#0099cc', 15,'#005a8e', 20,'#002d5a','#003d6b'],
+      'line-opacity':0.6, 'line-width':0.8,
+    },
+  });
+
+  setStatus('Loading retail POIs…');
+  map.addSource('poi', { type:'vector', url:`pmtiles://${R2_POI}` });
+  map.addLayer({
+    id:'poi-circle', type:'circle', source:'poi', 'source-layer':'retail_pois',
+    minzoom:12,
+    paint:{
+      'circle-radius':['interpolate',['linear'],['zoom'], 12,2, 15,5],
+      'circle-color':'#ff6b35', 'circle-opacity':0.75,
+      'circle-stroke-width':0.5, 'circle-stroke-color':'rgba(255,107,53,0.4)',
+    },
+  });
+
+  // Init toggle states
+  document.querySelectorAll('.toggle-pill').forEach(p => p.classList.remove('inactive'));
+
+  hideLoader();
+});
+
+// Walk filter
+document.querySelectorAll('.walk-step').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeMinutes = parseInt(btn.dataset.minutes);
+    document.querySelectorAll('.walk-step').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('walk-value').textContent = `≤ ${activeMinutes} min walk`;
+    if (map.getLayer('iso-fill')) {
+      map.setFilter('iso-fill', ['<=',['get','contour'], activeMinutes]);
+      map.setFilter('iso-line', ['<=',['get','contour'], activeMinutes]);
+    }
+  });
+});
+
+// Layer toggles
+const LAYER_MAP = { mhi:['mhi-fill','mhi-outline'], iso:['iso-fill','iso-line'], poi:['poi-circle'] };
+document.querySelectorAll('.toggle-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const key = pill.dataset.layer;
+    layerVisible[key] = !layerVisible[key];
+    pill.classList.toggle('inactive', !layerVisible[key]);
+    const vis = layerVisible[key] ? 'visible' : 'none';
+    LAYER_MAP[key].forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id,'visibility',vis); });
+  });
+});
+
+// Tooltips
+const tooltip = document.getElementById('tooltip');
+const ttLabel = document.getElementById('tt-label');
+const ttValue = document.getElementById('tt-value');
+const ttSub   = document.getElementById('tt-sub');
+
+function showTip(e, label, value, sub='') {
+  ttLabel.textContent = label;
+  ttValue.textContent = value;
+  ttSub.textContent   = sub;
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.point.x + 14) + 'px';
+  tooltip.style.top  = (e.point.y - 10) + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+map.on('mousemove','mhi-fill', e => {
+  if (!layerVisible.mhi) return;
+  const p = e.features[0].properties;
+  const v = p.mhi;
+  showTip(e, 'Median Household Income',
+    (!v || v <= 0) ? 'No data' : '$' + Math.round(v).toLocaleString(),
+    p.GEOID ? `Tract ${String(p.GEOID).slice(-6)}` : '');
+});
+map.on('mouseleave','mhi-fill', hideTip);
+
+map.on('mousemove','iso-fill', e => {
+  if (!layerVisible.iso) return;
+  const p = e.features[0].properties;
+  showTip(e, 'Walk Time to Retail', `${p.contour} min`, p.name||'');
+});
+map.on('mouseleave','iso-fill', hideTip);
+
+map.on('mousemove','poi-circle', e => {
+  if (!layerVisible.poi) return;
+  const p = e.features[0].properties;
+  showTip(e, 'Retail / Grocery', p.name||p.fsq_id||'POI', p.category||p.fsq_category||'');
+  map.getCanvas().style.cursor = 'pointer';
+});
+map.on('mouseleave','poi-circle', () => { hideTip(); map.getCanvas().style.cursor=''; });
+map.on('mouseenter','iso-fill',   () => { map.getCanvas().style.cursor='crosshair'; });
+map.on('mouseleave','iso-fill',   () => { map.getCanvas().style.cursor=''; });
+</script>
+</body>
+</html>
